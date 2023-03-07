@@ -1,3 +1,5 @@
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -5,6 +7,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using TodoList.Api.Model;
+using TodoList.Api.Validators;
 
 namespace TodoList.Api
 {
@@ -30,13 +34,14 @@ namespace TodoList.Api
                                  .AllowAnyMethod();
                       });
             });
-
+            services.AddTransient<ITodoItemRepository, TodoItemRepository>();
+            services.AddTransient<IValidator<TodoItem>, TodoItemsValidations>();
+            services.AddControllers().AddFluentValidation(x => x.ImplicitlyValidateChildProperties = true);
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "TodoList.Api", Version = "v1" });
             });
-
             services.AddDbContext<TodoContext>(opt => opt.UseInMemoryDatabase("TodoItemsDB"));
         }
 
