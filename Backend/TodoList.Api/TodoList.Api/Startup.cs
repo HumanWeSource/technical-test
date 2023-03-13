@@ -34,7 +34,7 @@ namespace TodoList.Api
                                  .AllowAnyMethod();
                       });
             });
-            services.AddTransient<ITodoItemRepository, TodoItemRepository>();
+            services.AddSingleton<ITodoItemRepository, TodoItemRepository>();
             services.AddTransient<IValidator<TodoItem>, TodoItemsValidations>();
             services.AddControllers().AddFluentValidation(x => x.ImplicitlyValidateChildProperties = true);
             services.AddControllers();

@@ -10,7 +10,8 @@ namespace TodoList.Api.Model
         Task<TodoItem> AddTodoItem(TodoItem todoItem);
         Task<IEnumerable<TodoItem>> GetTodoItems();
         Task UpdateTodoItem(Guid id, TodoItem todoItem);
-
+        Task<bool> TodoItemIdExists(Guid id);
+        Task<bool> TodoItemDescriptionExists(string description);
 
     }
 }

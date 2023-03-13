@@ -12,7 +12,7 @@ namespace TodoList.Api.UnitTests.ControllerTests
     {
         Mock<ILogger<TodoItemsController>> mockLogger;
         Mock<ITodoItemRepository> mockTodoRepository;
-        
+         Mock<TodoContext> mockTodoContext;
         #region validTodoItemList
         List<TodoItem> validIncompleteList = new List<TodoItem>()
         {
@@ -75,21 +75,20 @@ namespace TodoList.Api.UnitTests.ControllerTests
         {
             mockLogger = new Mock<ILogger<TodoItemsController>>();
             mockTodoRepository = new Mock<ITodoItemRepository>();
+            var options = new DbContextOptionsBuilder<TodoContext>()
+            .UseInMemoryDatabase(databaseName: "FekaConnectionString")
+            .Options;
+             mockTodoContext = new Mock<TodoContext>(options);
         }
 
         [Test]
         public async Task GivenCorrectIdThenReturnCorrectTodoItem()
         {
-            var options = new DbContextOptionsBuilder<TodoContext>()
-               .UseInMemoryDatabase(databaseName: "FekaConnectionString")
-               .Options;
-            var mockTodoContext = new Mock<TodoContext>(options);
-
             mockTodoContext.Setup<DbSet<TodoItem>>(x => x.TodoItems).ReturnsDbSet(validIncompleteList);
 
             mockTodoRepository.Setup(x => x.GetTodoItemById(It.IsAny<Guid>())).ReturnsAsync(validTodoItemrResponse);
 
-            var controller = new TodoItemsController(mockTodoContext.Object, mockLogger.Object, mockTodoRepository.Object);
+            var controller = new TodoItemsController(mockLogger.Object, mockTodoRepository.Object);
 
             var result = await controller.GetTodoItem(validTodoItemRequest.Id);
             var objectResult = result as OkResult;
@@ -101,13 +100,8 @@ namespace TodoList.Api.UnitTests.ControllerTests
         [Test]
         public async Task GivenIncorrectTodoItemThenThrowExceptionNotFound()
         {
-            var options = new DbContextOptionsBuilder<TodoContext>()
-                .UseInMemoryDatabase(databaseName: "FekaConnectionString")
-                .Options;
-            var mockTodoContext = new Mock<TodoContext>(options);
-
             mockTodoContext.Setup<DbSet<TodoItem>>(x => x.TodoItems).ReturnsDbSet(validIncompleteList);
-            var controller = new TodoItemsController(mockTodoContext.Object, mockLogger.Object, mockTodoRepository.Object);
+            var controller = new TodoItemsController(mockLogger.Object, mockTodoRepository.Object);
 
             var result = await controller.GetTodoItem(notFoundTodoItemRequest.Id);
             var objectResult = result as StatusCodeResult;
@@ -117,14 +111,10 @@ namespace TodoList.Api.UnitTests.ControllerTests
         [Test]
         public async Task GivenIncorrectTodoItemThenThrpwDbUpdateConcurrencyException()
         {
-            var options = new DbContextOptionsBuilder<TodoContext>()
-            .UseInMemoryDatabase(databaseName: "FekaConnectionString")
-            .Options;
-            var mockTodoContext = new Mock<TodoContext>(options);
-
             mockTodoContext.Setup<DbSet<TodoItem>>(x => x.TodoItems).ReturnsDbSet(validIncompleteList);
             mockTodoRepository.Setup(x => x.UpdateTodoItem(It.IsAny<Guid>(), It.IsAny<TodoItem>())).ThrowsAsync(new DbUpdateConcurrencyException());
-            var controller = new TodoItemsController(mockTodoContext.Object, mockLogger.Object, mockTodoRepository.Object);
+            mockTodoRepository.Setup(x => x.TodoItemIdExists(It.IsAny<Guid>())).ReturnsAsync(true);
+            var controller = new TodoItemsController(mockLogger.Object, mockTodoRepository.Object);
 
             var result =  controller.PutTodoItem(dbUpdateConcurrencyExceptionRequest.Id, validTodoItemrRequest);
             Assert.ThrowsAsync<DbUpdateConcurrencyException>(async () => await result);

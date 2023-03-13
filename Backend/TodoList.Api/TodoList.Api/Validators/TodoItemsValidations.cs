@@ -8,10 +8,10 @@ namespace TodoList.Api.Validators
 {
     public class TodoItemsValidations: AbstractValidator<TodoItem>
     {
-        private readonly TodoContext _context;
-        public TodoItemsValidations(TodoContext context)
+        private readonly ITodoItemRepository _todoItemRepository;
+        public TodoItemsValidations(ITodoItemRepository todoItemRepository)
         {
-            _context = context;
+            _todoItemRepository = todoItemRepository;
             CascadeMode = CascadeMode.StopOnFirstFailure;
 
             RuleFor(x => x.Id)
@@ -21,7 +21,7 @@ namespace TodoList.Api.Validators
             RuleFor(x => x.Id)
                 .MustAsync(async (y, cancellation) =>
                 {
-                    bool exists = await TodoItemIdExists(y);
+                    bool exists = await _todoItemRepository.TodoItemIdExists(y);
                     return !exists;
                 })
                 .WithMessage("ID already exists");
@@ -29,19 +29,10 @@ namespace TodoList.Api.Validators
             RuleFor(x => x.Description)
                 .MustAsync(async (y, cancellation) =>
                 {
-                    bool exists = await TodoItemDescriptionExists(y);
+                    bool exists = await _todoItemRepository.TodoItemDescriptionExists(y);
                     return !exists;
                 })
                 .WithMessage("Description already exists");
-        }
-        protected async Task<bool> TodoItemIdExists(Guid id)
-        {
-            return _context.TodoItems.Any(x => x.Id == id);
-        }
-        protected async Task<bool> TodoItemDescriptionExists(string description)
-        {
-            return _context.TodoItems
-                   .Any(x => x.Description.ToLowerInvariant() == description.ToLowerInvariant() && !x.IsCompleted);
         }
     }
 }

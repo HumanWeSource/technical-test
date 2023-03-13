@@ -14,13 +14,11 @@ namespace TodoList.Api.Controllers
     [ApiController]
     public class TodoItemsController : ControllerBase
     {
-        private readonly TodoContext _context;
         private readonly ILogger<TodoItemsController> _logger;
         private readonly ITodoItemRepository _todoItemRepository;
 
-        public TodoItemsController(TodoContext context, ILogger<TodoItemsController> logger, ITodoItemRepository todoItemRepository)
+        public TodoItemsController(ILogger<TodoItemsController> logger, ITodoItemRepository todoItemRepository)
         {
-            _context = context;
             _logger = logger;
             _todoItemRepository = todoItemRepository;
         }
@@ -78,7 +76,7 @@ namespace TodoList.Api.Controllers
             catch (DbUpdateConcurrencyException ex)
             {
                 _logger.LogError(ex, ex.Message);
-                if (!TodoItemIdExists(id))
+                if (!(await _todoItemRepository.TodoItemIdExists(id)))
                 {
                     return NotFound();
                 }
@@ -109,10 +107,5 @@ namespace TodoList.Api.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
         } 
-
-        private bool TodoItemIdExists(Guid id)
-        {
-            return _context.TodoItems.Any(x => x.Id == id);
-        }
     }
 }

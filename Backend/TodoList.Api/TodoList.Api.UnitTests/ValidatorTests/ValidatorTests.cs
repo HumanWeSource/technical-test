@@ -11,6 +11,8 @@ namespace TodoList.Api.UnitTests.ValidatorTests
     {
         private TodoItemsValidations validator;
         Mock<TodoContext> mockTodoContext;
+        Mock<ITodoItemRepository> mockTodoRespository;
+
 
         #region validTodoItemList
         List<TodoItem> validIncompleteList = new List<TodoItem>()
@@ -83,10 +85,10 @@ namespace TodoList.Api.UnitTests.ValidatorTests
             .UseInMemoryDatabase(databaseName: "FekaConnectionString")
             .Options;
             mockTodoContext = new Mock<TodoContext>(options);
-
+            mockTodoRespository = new Mock<ITodoItemRepository>();
             mockTodoContext.Setup<DbSet<TodoItem>>(x => x.TodoItems).ReturnsDbSet(validIncompleteList);
 
-            validator = new TodoItemsValidations(mockTodoContext.Object);
+            validator = new TodoItemsValidations(mockTodoRespository.Object);
         }
 
         [Test]
@@ -102,6 +104,8 @@ namespace TodoList.Api.UnitTests.ValidatorTests
         public void GivenItemIsInvalidThenReturnBadRequest()
         {
             mockTodoContext.Setup<DbSet<TodoItem>>(x => x.TodoItems).ReturnsDbSet(inValidIncompleteList);
+            mockTodoRespository.Setup(x => x.TodoItemDescriptionExists(It.IsAny<string>())).ReturnsAsync(true);
+            mockTodoRespository.Setup(x => x.TodoItemIdExists(It.IsAny<Guid>())).ReturnsAsync(true);
             var model = inValidTodoItemRequest;
             var result = validator.TestValidate(model);
 

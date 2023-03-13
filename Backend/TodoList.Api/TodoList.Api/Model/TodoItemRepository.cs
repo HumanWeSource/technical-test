@@ -36,5 +36,14 @@ namespace TodoList.Api.Model
             _context.Entry(todoItem).State = EntityState.Modified;
             await _context.SaveChangesAsync();
         }
+        public async Task<bool> TodoItemIdExists(Guid id)
+        {
+            return _context.TodoItems.Any(x => x.Id == id);
+        }
+        public async Task<bool> TodoItemDescriptionExists(string description)
+        {
+            return _context.TodoItems
+                   .Any(x => x.Description.ToLowerInvariant() == description.ToLowerInvariant() && !x.IsCompleted);
+        }
     }
 }
